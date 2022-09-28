@@ -32,13 +32,13 @@ st.header('AUR Monte Carlo sensitivity analysis')
 st.markdown('Aurora\'s stock heavily relies on a series of events going right, which I model out with monte carlo sims below.')
 st.markdown("""
     There\'s three parts to the model below: 
-    1. The opporunity: where we look at how much ARR + EBITDA AUR can make when their driver launches,  
-    2. the cash burn: where we factor in delays and expected cash burn given their present circumstance
-    3. the catastrophe: Autonomous driving can and has gone poorly. Here's where fat tails emerge. 
-    
+    I model out the trucks, and how much the intitial fleet costs. This at start will be handled by Aurora, which will hold the first hundred trucks on their balance sheet.
+    At scale, this can show how useful a sleepless truck driver is. 
+
+    I model out rates per mile and avg speed of a truck. How much freight they can carry is abstracted out to the utilization. 
+
     All distirbutions have fat tails and excess kurtosis, and only  in some special choices or parameters resemble normal distributions.   
     """)
-st.header('The Opportunity')
 
 opp_truck,opp_rates,opp_util = st.tabs(["#Trucks build","rate build",'utilization build'])
 
@@ -83,15 +83,15 @@ with opp_rates:
                         f"Distribution of ravg mph, Mean: {round(mph_dist.mean(),2)}")
 with opp_util:
     with st.expander("How much will these trucks get utilized?"):
-        st.markdown('By 2026, Aurora plans to mass market at ~60\% utilization. Average LTL load in southern US is 500 miles')
+        st.markdown('By 2026, Aurora plans to mass market at ~60\% utilization.')
         twenty_six_loads_alpha = st.slider(
-            'Positive bias on on how many hours/year Aurora drivers are on the road  ', min_value=1, max_value=20, value=8)
+            'Positive bias on on how many hours/year Aurora drivers are on the road  ', min_value=1, max_value=20, value=14)
         twenty_six_loads_beta = st.slider(
-            'Negative bias on how many hours/year Aurora drivers are on the road  ', min_value=1, max_value=20, value=3)
+            'Negative bias on how many hours/year Aurora drivers are on the road  ', min_value=1, max_value=20, value=2)
         twenty_six_loads_var = st.slider(
-            "Dispersion on how many hours/year Aurora drivers are on the road ",  min_value=0.01, max_value=0.2, value=0.1)
+            "Dispersion on how many hours/year Aurora drivers are on the road ",  min_value=0.01, max_value=0.2, value=0.03)
         twenty_six_util_dist = sp.beta(twenty_six_loads_alpha, twenty_six_loads_beta,
-                                    loc=.4, scale=twenty_six_loads_var).rvs(num_variates)
+                                    loc=.45, scale=twenty_six_loads_var).rvs(num_variates)
         plot_distribution(twenty_six_util_dist,
                         f"Distribution of Utilization, Mean: {round(twenty_six_util_dist.mean(),2)}")
 
@@ -107,3 +107,12 @@ humans_payoff_time = fleet_cost / (0.3* rate_dist * mph_dist*truck_dist * 365 *2
 st.markdown("Payoff time for the fleet compared to working with humans(orange) vs AI drivers (Blue):")
 plot_distribution(days_to_payoff,f'years to pay off fleet: mean: {round(days_to_payoff.mean(),2)}',humans_payoff_time)
 
+st.markdown("A disaster isn't unlikely when you're working with Autonomous trucking. Here's a handy calculator to think about what a probability of an accident per year looks like for AUR.")
+catas_mean = st.slider("Mean Probability of a disaster per year",min_value=0.001,max_value=0.2,value=0.005 )
+prob_catas = (1 -catas_mean)**4 #2023,2024,2025,2026
+#weighted_ARR_multiple =  ((2.6*1000) /(prob_catas *twenty_six_revenue))
+st.metric("Probability of no disaster in four years:", str(round(prob_catas,3)*100) + "%")
+
+st.markdown("weighted expected revenue given probability of disaster:")
+wrt_disas = revenue_dist*prob_catas
+plot_distribution(wrt_disas, f"Expected revenue w.r.t disaster probability ($mns), mean: {round(wrt_disas.mean(),2)}")
