@@ -11,6 +11,7 @@ warnings.filterwarnings("ignore")
 
 
 def plot_distribution(dist_variates, title=""):
+    dist_variates = dist_variates/dist_variates.sum()
     fig = plt.figure(figsize=(10, 4))
     sns.distplot(dist_variates, bins=100,norm_hist=True)
     fig.suptitle(title, fontsize=16)
