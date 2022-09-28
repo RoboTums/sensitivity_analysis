@@ -4,9 +4,9 @@ channels:
 dependencies:
   - numpy=1.22
   - pandas=1.4.4
-  - seaborn
+  - seaborn=0.11.2
   - scipy=1.7.1
-  - matplotlib
+  - matplotlib=3.5.2
   - streamlit=1.11.0
   - python=3.9
 prefix: /Users/tumasrackaitis/opt/anaconda3/envs/probCalc
